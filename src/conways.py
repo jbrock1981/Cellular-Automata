@@ -1,38 +1,36 @@
 import pygame, random
+import sys
+import random
  
 # Define some colors and other constants
-BLUE = (66, 87, 245)
+BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-PINK = (242, 172, 241)
-GRAY = (228, 230, 235)
-WIN_SIZE = 505
+GRAY = (25, 25, 25)
 
-WIDTH = 20
-HEIGHT = 20
- 
-# This sets the margin between each cell
-MARGIN = 15
+starting_margins = 5
+square_size_w_padding = 22
+border = 2
 
-grid = []
-for row in range(20):
-    # Add an empty array that will hold each cell
-    # in this row
-    grid.append([])
-    for column in range(20):
-        grid[row].append(0)  # Append a cell
+num_squares = 23 if len(sys.argv) == 1 else int(sys.argv[1])
+WIN_SIZE =  square_size_w_padding * num_squares
 
-grid[9][10] = 1
-grid[10][10] = 1
-grid[11][10] = 1
+
+
+curr_states =[ [random.randint(0,1)  for n in range(num_squares)] for i in range(num_squares)]
+for i in curr_states:
+    print (i)
+next_states = [[0 for n in range(num_squares)] for i in range(num_squares)]
+
+
 
 pygame.init()
  
 # Set the width and height of the screen [width, height]
-size = (WIN_SIZE, WIN_SIZE)
+size = (WIN_SIZE + (2 * starting_margins), WIN_SIZE + (2 * starting_margins))
 screen = pygame.display.set_mode(size)
 
 # Add a title
-pygame.display.set_caption("Conway's Game of Life")
+pygame.display.set_caption("Conways")
  
 # Loop until the user clicks the close button.
 done = False
@@ -41,6 +39,7 @@ done = False
 clock = pygame.time.Clock()
  
 # -------- Main Program Loop -----------
+
 while not done:
     # --- Main event loop
     for event in pygame.event.get():
@@ -48,42 +47,61 @@ while not done:
             done = True
  
     # --- Game logic should go here
-    '''
-    Any live cell with fewer than two live neighbours dies, as if by underpopulation.
-    Any live cell with two or three live neighbours lives on to the next generation.
-    Any live cell with more than three live neighbours dies, as if by overpopulation.
-    Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-    '''
-    for cell in grid:
-        if cell == 1:
-            if sum_of_neighbors < 2:
-                return 0
-            elif sum_of_neighbors < 4:
-                return 1
+
+    # Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+    # Any live cell with two or three live neighbours lives on to the next generation.
+    # Any live cell with more than three live neighbours dies, as if by overpopulation.
+    # Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+
+    #3. WORK ON RULES THAT 1) LOOK AT ALL NEIGHBORS, 2) SAVE THE NEW STATE IN NEXT_STATES[]
+    locals=[-1, 0, 1]
+    for i in range(len(curr_states)):
+        for node in range(len(curr_states[i])):
+            count = 0
+            for j in locals:
+                for k in locals:
+                    if i + j >= 0 and i + j < num_squares and node + k >= 0 and node + k < num_squares and curr_states[(i + j)][(node + k)] == 1:
+                        count += 1
+            if curr_states[i][node] == 1:
+                count -= 1
+                if count < 2 or count > 3:
+                    next_states[i][node] = 0
+                else:
+                    next_states[i][node] = 1
             else:
-                return 0
-        else:
-            if sum_of_neighbors == 3:
-                return 1
-            else:
-                return 0
- 
+                if count == 3:
+                    next_states[i][node] = 1
+                else:
+                    next_states[i][node] = 0
+
+            # print(curr_states[i][node],  count,  next_states[i][node])
+    for i in range(len(next_states)):
+        for node in range(len(next_states[i])):
+            curr_states[i][node] = next_states[i][node]
+    
+    # print("----------------NEW STATE------------------")
+    # for i in curr_states:
+    #     print(i)
     # --- Screen-clearing code goes here
  
     # Here, we clear the screen to gray. Don't put other drawing commands
     # above this, or they will be erased with this command.
-    screen.fill(WHITE)
+    screen.fill(GRAY)
  
     # --- Drawing code should go here
-    for row in range(20):
-        for column in range(20):
-            color = PINK
-            if grid[row][column] == 1:
-                color = BLUE
-            pygame.draw.circle(screen,
-                                color,
-                                (((column+1)*22)+15, ((row+1)*22)),
-                                10)
+    
+    x= starting_margins
+    # curr_index = 0
+    while x < WIN_SIZE:
+        y= starting_margins
+        while y < WIN_SIZE:
+            # 2 draw based IN CURR_STATES
+            COLOR = BLACK if curr_states[int((x - starting_margins)/square_size_w_padding)][int((y-starting_margins)/square_size_w_padding)] == 0 else WHITE
+    
+            # 4 Draw based on values in next_states
+            pygame.draw.rect(screen, COLOR, pygame.Rect(x, y, (square_size_w_padding - border), (square_size_w_padding - border)) )
+            y += square_size_w_padding
+        x += square_size_w_padding
 
     # --- Go ahead and update the screen with what we've drawn.
     pygame.display.flip()
